@@ -37,11 +37,15 @@ class _SmartInboxScreenState extends State<SmartInboxScreen> {
   Widget build(BuildContext context) {
     final inbox = context.watch<SmartInboxProvider>();
     final collections = context.watch<CollectionProvider>().collections;
-    final selectedItems = inbox.items.where((item) => _selectedIds.contains(item.id)).toList();
+    final selectedItems = inbox.items
+        .where((item) => _selectedIds.contains(item.id))
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isSelecting ? '${_selectedIds.length} selected' : 'Smart Inbox'),
+        title: Text(
+          _isSelecting ? '${_selectedIds.length} selected' : 'Smart Inbox',
+        ),
         leading: _isSelecting
             ? IconButton(
                 icon: const Icon(Icons.close_rounded),
@@ -52,19 +56,26 @@ class _SmartInboxScreenState extends State<SmartInboxScreen> {
           if (_isSelecting) ...[
             IconButton(
               tooltip: 'Done',
-              onPressed: selectedItems.isEmpty ? null : () => _markDoneMany(selectedItems),
+              onPressed: selectedItems.isEmpty
+                  ? null
+                  : () => _markDoneMany(selectedItems),
               icon: const Icon(Icons.check_rounded),
             ),
             IconButton(
               tooltip: 'Move',
               onPressed: selectedItems.isEmpty
                   ? null
-                  : () => _showMoveSheet(items: selectedItems, collections: collections),
-              icon: const Icon(Icons.drive_file_move_outline_rounded),
+                  : () => _showMoveSheet(
+                      items: selectedItems,
+                      collections: collections,
+                    ),
+              icon: const Icon(Icons.drive_file_move_outlined),
             ),
             IconButton(
               tooltip: 'Delete',
-              onPressed: selectedItems.isEmpty ? null : () => _deleteMany(selectedItems),
+              onPressed: selectedItems.isEmpty
+                  ? null
+                  : () => _deleteMany(selectedItems),
               icon: const Icon(Icons.delete_outline_rounded),
             ),
           ],
@@ -78,7 +89,12 @@ class _SmartInboxScreenState extends State<SmartInboxScreen> {
           : Stack(
               children: [
                 ListView(
-                  padding: EdgeInsets.fromLTRB(20, 12, 20, _isSelecting ? 108 : 24),
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    12,
+                    20,
+                    _isSelecting ? 108 : 24,
+                  ),
                   children: [
                     _InboxHero(count: inbox.items.length),
                     const SizedBox(height: 16),
@@ -90,9 +106,13 @@ class _SmartInboxScreenState extends State<SmartInboxScreen> {
                         selecting: _isSelecting,
                         onToggleSelected: () => _toggleSelected(item.id),
                         onDone: () => _markDone(item),
-                        onMove: () => _showMoveSheet(item: item, collections: collections),
+                        onMove: () => _showMoveSheet(
+                          item: item,
+                          collections: collections,
+                        ),
                         onDelete: () => _deleteItem(item),
-                        onCollectionSelected: (collection) => _moveItem(item, collection.id),
+                        onCollectionSelected: (collection) =>
+                            _moveItem(item, collection.id),
                       ),
                   ],
                 ),
@@ -100,7 +120,10 @@ class _SmartInboxScreenState extends State<SmartInboxScreen> {
                   _BulkActionBar(
                     count: _selectedIds.length,
                     onDone: () => _markDoneMany(selectedItems),
-                    onMove: () => _showMoveSheet(items: selectedItems, collections: collections),
+                    onMove: () => _showMoveSheet(
+                      items: selectedItems,
+                      collections: collections,
+                    ),
                     onDelete: () => _deleteMany(selectedItems),
                   ),
               ],
@@ -122,7 +145,10 @@ class _SmartInboxScreenState extends State<SmartInboxScreen> {
   }
 
   Future<void> _moveItem(VaultItem item, String collectionId) async {
-    await context.read<SmartInboxProvider>().moveToCollection(item, collectionId);
+    await context.read<SmartInboxProvider>().moveToCollection(
+      item,
+      collectionId,
+    );
     if (!mounted) return;
     _afterInboxChange();
     _showSnack('Moved to collection');
@@ -171,6 +197,7 @@ class _SmartInboxScreenState extends State<SmartInboxScreen> {
       ),
     );
     if (confirmed != true) return;
+    if (!mounted) return;
     await context.read<SmartInboxProvider>().deleteMany(items);
     if (!mounted) return;
     setState(_selectedIds.clear);
@@ -197,13 +224,17 @@ class _SmartInboxScreenState extends State<SmartInboxScreen> {
           children: [
             Text(
               'Move to collection',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
             for (final collection in collections)
               ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Color(collection.color).withValues(alpha: 0.14),
+                  backgroundColor: Color(
+                    collection.color,
+                  ).withValues(alpha: 0.14),
                   child: Icon(
                     IconMapper.collection(collection.icon),
                     color: Color(collection.color),
@@ -230,7 +261,9 @@ class _SmartInboxScreenState extends State<SmartInboxScreen> {
   }
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
@@ -257,7 +290,10 @@ class _InboxHero extends StatelessWidget {
               color: theme.colorScheme.primary.withValues(alpha: 0.13),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(Icons.rule_folder_outlined, color: theme.colorScheme.primary),
+            child: Icon(
+              Icons.rule_folder_outlined,
+              color: theme.colorScheme.primary,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -266,7 +302,9 @@ class _InboxHero extends StatelessWidget {
               children: [
                 Text(
                   'Review $count ${count == 1 ? 'item' : 'items'}',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -348,8 +386,12 @@ class _ReviewCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 12, right: 12),
                     child: Icon(
-                      selected ? Icons.check_circle_rounded : Icons.circle_outlined,
-                      color: selected ? Theme.of(context).colorScheme.primary : null,
+                      selected
+                          ? Icons.check_circle_rounded
+                          : Icons.circle_outlined,
+                      color: selected
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
                     ),
                   ),
                 ],
@@ -408,14 +450,16 @@ class _ReviewCardBody extends StatelessWidget {
                 item.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
             IconButton(
               tooltip: 'Move',
               visualDensity: VisualDensity.compact,
               onPressed: onMove,
-              icon: const Icon(Icons.drive_file_move_outline_rounded),
+              icon: const Icon(Icons.drive_file_move_outlined),
             ),
           ],
         ),
@@ -482,14 +526,21 @@ class _ReviewCardBody extends StatelessWidget {
       for (final part in name.split(RegExp(r'\s+'))) {
         if (part.length > 2 && itemText.contains(part)) score += 2;
       }
-      if (item.itemType == VaultItemType.youtube && name.contains('flutter')) score += 1;
-      if (item.itemType == VaultItemType.linkedin && name.contains('career')) score += 2;
+      if (item.itemType == VaultItemType.youtube && name.contains('flutter')) {
+        score += 1;
+      }
+      if (item.itemType == VaultItemType.linkedin && name.contains('career')) {
+        score += 2;
+      }
       if (item.tags.any((tag) => name.contains(tag.toLowerCase()))) score += 3;
       if (score > 0) scored.add((collection: collection, score: score));
     }
 
     scored.sort((a, b) => b.score.compareTo(a.score));
-    final suggestions = scored.map((entry) => entry.collection).take(3).toList();
+    final suggestions = scored
+        .map((entry) => entry.collection)
+        .take(3)
+        .toList();
     if (suggestions.isNotEmpty) return suggestions;
     return collections.take(3).toList();
   }
@@ -521,20 +572,25 @@ class _SwipeBackground extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        textDirection: isLeft ? TextDirection.ltr : TextDirection.rtl,
-        children: [
-          Icon(icon, color: Colors.white),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-        ],
+        children: isLeft
+            ? _children(context)
+            : _children(context).reversed.toList(),
       ),
     );
+  }
+
+  List<Widget> _children(BuildContext context) {
+    return [
+      Icon(icon, color: Colors.white),
+      const SizedBox(width: 8),
+      Text(
+        label,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    ];
   }
 }
 
@@ -569,7 +625,9 @@ class _BulkActionBar extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Text(
                   '$count selected',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
               const Spacer(),
@@ -581,7 +639,7 @@ class _BulkActionBar extends StatelessWidget {
               IconButton.filledTonal(
                 tooltip: 'Move',
                 onPressed: onMove,
-                icon: const Icon(Icons.drive_file_move_outline_rounded),
+                icon: const Icon(Icons.drive_file_move_outlined),
               ),
               IconButton.filledTonal(
                 tooltip: 'Delete',

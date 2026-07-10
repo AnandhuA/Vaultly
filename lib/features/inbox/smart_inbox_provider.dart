@@ -14,7 +14,11 @@ class SmartInboxProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> markDone(VaultItem item, {String? collectionId, String? note}) async {
+  Future<void> markDone(
+    VaultItem item, {
+    String? collectionId,
+    String? note,
+  }) async {
     await _repository.updateItem(
       item.copyWith(
         collectionId: collectionId,

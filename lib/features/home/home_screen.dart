@@ -23,7 +23,8 @@ class HomeScreen extends StatelessWidget {
       return SafeArea(
         child: EmptyState(
           title: 'Your vault is empty',
-          subtitle: 'Start by sharing a link from Instagram, YouTube, LinkedIn or Chrome.',
+          subtitle:
+              'Start by sharing a link from Instagram, YouTube, LinkedIn or Chrome.',
           actionLabel: 'Add first item',
           onAction: () => Navigator.pushNamed(context, AppRoutes.capture),
         ),
@@ -36,9 +37,7 @@ class HomeScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
           children: [
-            _HomeHeader(
-              inboxCount: home.smartInbox.length,
-            ),
+            _HomeHeader(inboxCount: home.smartInbox.length),
             const SizedBox(height: 16),
             InkWell(
               onTap: onSearchTap,
@@ -62,15 +61,26 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 20),
             ],
             _Section(title: 'Quick Save', child: _QuickSave()),
-            if (kDebugMode && context.watch<CaptureProvider>().lastReceivedSeed != null)
-              _LastShareDebug(seed: context.watch<CaptureProvider>().lastReceivedSeed!),
+            if (kDebugMode &&
+                context.watch<CaptureProvider>().lastReceivedSeed != null)
+              _LastShareDebug(
+                seed: context.watch<CaptureProvider>().lastReceivedSeed!,
+              ),
             if (home.smartInbox.isEmpty)
               const _Section(
                 title: 'Smart Inbox',
                 child: _InboxSummary(count: 0),
               ),
-            _HorizontalItems(title: 'Continue', items: home.continueItems, collections: home.collections),
-            _HorizontalItems(title: 'Recently Saved', items: home.recent, collections: home.collections),
+            _HorizontalItems(
+              title: 'Continue',
+              items: home.continueItems,
+              collections: home.collections,
+            ),
+            _HorizontalItems(
+              title: 'Recently Saved',
+              items: home.recent,
+              collections: home.collections,
+            ),
             _Section(
               title: 'Collections',
               child: GridView.count(
@@ -84,13 +94,21 @@ class HomeScreen extends StatelessWidget {
                   for (final collection in home.collections.take(6))
                     CollectionCard(
                       collection: collection,
-                      onTap: () => Navigator.pushNamed(context, AppRoutes.collectionDetail, arguments: collection.id),
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.collectionDetail,
+                        arguments: collection.id,
+                      ),
                     ),
                 ],
               ),
             ),
             if (home.todaysFocus.isNotEmpty)
-              _HorizontalItems(title: "Today's Focus", items: home.todaysFocus, collections: home.collections),
+              _HorizontalItems(
+                title: "Today's Focus",
+                items: home.todaysFocus,
+                collections: home.collections,
+              ),
           ],
         ),
       ),
@@ -120,7 +138,11 @@ class _LastShareDebug extends StatelessWidget {
           trailing: const Icon(Icons.chevron_right_rounded),
           onTap: text.isEmpty
               ? null
-              : () => Navigator.pushNamed(context, AppRoutes.capture, arguments: seed),
+              : () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.capture,
+                  arguments: seed,
+                ),
         ),
       ),
     );
@@ -128,11 +150,10 @@ class _LastShareDebug extends StatelessWidget {
 }
 
 class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child, this.action});
+  const _Section({required this.title, required this.child});
 
   final String title;
   final Widget child;
-  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -143,8 +164,14 @@ class _Section extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800))),
-              ?action,
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -156,9 +183,7 @@ class _Section extends StatelessWidget {
 }
 
 class _HomeHeader extends StatelessWidget {
-  const _HomeHeader({
-    required this.inboxCount,
-  });
+  const _HomeHeader({required this.inboxCount});
 
   final int inboxCount;
 
@@ -211,7 +236,10 @@ class _HomeHeader extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.lock_outline_rounded, color: Colors.white),
+                child: const Icon(
+                  Icons.lock_outline_rounded,
+                  color: Colors.white,
+                ),
               ),
             ],
           ),
@@ -292,9 +320,16 @@ class _InboxSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        leading: Icon(Icons.inbox_outlined, color: Theme.of(context).colorScheme.primary),
-        title: Text(count == 0 ? 'Everything organized' : '$count items need review'),
-        subtitle: const Text('Review uncategorized saves when you have a minute.'),
+        leading: Icon(
+          Icons.inbox_outlined,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        title: Text(
+          count == 0 ? 'Everything organized' : '$count items need review',
+        ),
+        subtitle: const Text(
+          'Review uncategorized saves when you have a minute.',
+        ),
         trailing: const Icon(Icons.chevron_right_rounded),
         onTap: () => Navigator.pushNamed(context, AppRoutes.smartInbox),
       ),
@@ -325,7 +360,10 @@ class _ReviewQueueCard extends StatelessWidget {
                   color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(Icons.rule_folder_outlined, color: theme.colorScheme.primary),
+                child: Icon(
+                  Icons.rule_folder_outlined,
+                  color: theme.colorScheme.primary,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -334,7 +372,9 @@ class _ReviewQueueCard extends StatelessWidget {
                   children: [
                     Text(
                       'Review $count ${count == 1 ? 'item' : 'items'}',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -345,7 +385,8 @@ class _ReviewQueueCard extends StatelessWidget {
                 ),
               ),
               FilledButton(
-                onPressed: () => Navigator.pushNamed(context, AppRoutes.smartInbox),
+                onPressed: () =>
+                    Navigator.pushNamed(context, AppRoutes.smartInbox),
                 child: const Text('Review'),
               ),
             ],
@@ -357,7 +398,11 @@ class _ReviewQueueCard extends StatelessWidget {
 }
 
 class _HorizontalItems extends StatelessWidget {
-  const _HorizontalItems({required this.title, required this.items, required this.collections});
+  const _HorizontalItems({
+    required this.title,
+    required this.items,
+    required this.collections,
+  });
 
   final String title;
   final List<VaultItem> items;
@@ -373,7 +418,9 @@ class _HorizontalItems extends StatelessWidget {
           for (final item in items)
             ItemCard(
               item: item,
-              collection: collections.where((c) => c.id == item.collectionId).firstOrNull,
+              collection: collections
+                  .where((c) => c.id == item.collectionId)
+                  .firstOrNull,
               compact: true,
             ),
         ],
