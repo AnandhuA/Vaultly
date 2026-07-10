@@ -32,7 +32,9 @@ class SaveBottomSheet extends StatelessWidget {
               const SizedBox(height: 20),
               Text(
                 'Quick save',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 4),
               Text(
@@ -48,7 +50,10 @@ class SaveBottomSheet extends StatelessWidget {
                 onTap: () async {
                   final data = await Clipboard.getData(Clipboard.kTextPlain);
                   if (context.mounted) {
-                    _open(context, CaptureSeed(text: data?.text ?? '', typeHint: 'text'));
+                    _open(
+                      context,
+                      CaptureSeed(text: data?.text ?? '', typeHint: 'text'),
+                    );
                   }
                 },
               ),
@@ -72,7 +77,8 @@ class SaveBottomSheet extends StatelessWidget {
                 icon: Icons.short_text_rounded,
                 label: 'Text',
                 subtitle: 'Paste or write text',
-                onTap: () => _open(context, const CaptureSeed(typeHint: 'text')),
+                onTap: () =>
+                    _open(context, const CaptureSeed(typeHint: 'text')),
               ),
               _Action(
                 icon: Icons.picture_as_pdf_outlined,
@@ -87,7 +93,9 @@ class SaveBottomSheet extends StatelessWidget {
                     _open(
                       context,
                       CaptureSeed(
-                        text: result.files.single.path ?? result.files.single.name,
+                        text:
+                            result.files.single.path ??
+                            result.files.single.name,
                         filePath: result.files.single.path,
                         typeHint: 'pdf',
                       ),
@@ -100,20 +108,49 @@ class SaveBottomSheet extends StatelessWidget {
                 label: 'Add Image',
                 subtitle: 'Pick from gallery',
                 onTap: () async {
-                  final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+                  final image = await ImagePicker().pickImage(
+                    source: ImageSource.gallery,
+                  );
                   if (context.mounted && image != null) {
                     _open(
                       context,
-                      CaptureSeed(text: image.path, filePath: image.path, typeHint: 'image'),
+                      CaptureSeed(
+                        text: image.path,
+                        filePath: image.path,
+                        typeHint: 'image',
+                      ),
+                    );
+                  }
+                },
+              ),
+              _Action(
+                icon: Icons.photo_camera_outlined,
+                label: 'Take Photo',
+                subtitle: 'Capture with camera',
+                onTap: () async {
+                  final image = await ImagePicker().pickImage(
+                    source: ImageSource.camera,
+                  );
+                  if (context.mounted && image != null) {
+                    _open(
+                      context,
+                      CaptureSeed(
+                        text: image.path,
+                        filePath: image.path,
+                        typeHint: 'image',
+                      ),
                     );
                   }
                 },
               ),
               _Action(
                 icon: Icons.mic_none_rounded,
-                label: 'Voice Note',
-                subtitle: 'Placeholder capture',
-                onTap: () => _open(context, const CaptureSeed(typeHint: 'voice')),
+                label: 'Create Voice Note',
+                subtitle: 'Save a spoken thought',
+                onTap: () => _open(
+                  context,
+                  const CaptureSeed(text: 'Voice note', typeHint: 'voice'),
+                ),
               ),
               _Action(
                 icon: Icons.create_new_folder_outlined,
@@ -128,18 +165,33 @@ class SaveBottomSheet extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Debug samples',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: const [
-                    _DebugChip(label: 'Instagram', text: 'https://www.instagram.com/reel/sample'),
-                    _DebugChip(label: 'LinkedIn', text: 'https://www.linkedin.com/posts/sample'),
-                    _DebugChip(label: 'YouTube', text: 'https://youtu.be/sample flutter clean architecture'),
+                    _DebugChip(
+                      label: 'Instagram',
+                      text: 'https://www.instagram.com/reel/sample',
+                    ),
+                    _DebugChip(
+                      label: 'LinkedIn',
+                      text: 'https://www.linkedin.com/posts/sample',
+                    ),
+                    _DebugChip(
+                      label: 'YouTube',
+                      text:
+                          'https://youtu.be/sample flutter clean architecture',
+                    ),
                     _DebugChip(label: 'Website', text: 'https://flutter.dev'),
-                    _DebugChip(label: 'Text', text: 'Useful plain text about provider and Flutter UI'),
+                    _DebugChip(
+                      label: 'Text',
+                      text: 'Useful plain text about provider and Flutter UI',
+                    ),
                   ],
                 ),
               ],
@@ -168,7 +220,11 @@ class _DebugChip extends StatelessWidget {
       label: Text(label),
       onPressed: () {
         Navigator.pop(context);
-        Navigator.pushNamed(context, AppRoutes.capture, arguments: CaptureSeed(text: text));
+        Navigator.pushNamed(
+          context,
+          AppRoutes.capture,
+          arguments: CaptureSeed(text: text),
+        );
       },
     );
   }

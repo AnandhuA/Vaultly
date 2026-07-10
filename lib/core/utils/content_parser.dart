@@ -32,7 +32,11 @@ class ParsedContent {
 }
 
 class ContentParser {
-  static ParsedContent parseSharedText(String text, {String? filePath, String? typeHint}) {
+  static ParsedContent parseSharedText(
+    String text, {
+    String? filePath,
+    String? typeHint,
+  }) {
     final raw = text.trim();
     final url = extractFirstUrl(raw);
     final target = url ?? raw;
@@ -50,7 +54,8 @@ class ContentParser {
       suggestedCollection: suggested,
       tags: generateTags(raw),
       localFilePath: filePath,
-      coverImageUrl: _localCover(filePath, typeHint) ?? youtubeThumbnailUrl(url ?? raw),
+      coverImageUrl:
+          _localCover(filePath, typeHint) ?? youtubeThumbnailUrl(url ?? raw),
       confidence: suggested == null ? 0.45 : 0.86,
     );
   }
@@ -84,7 +89,10 @@ class ContentParser {
   }
 
   static String? extractFirstUrl(String text) {
-    final match = RegExp(r'https?:\/\/[^\s]+|www\.[^\s]+', caseSensitive: false).firstMatch(text);
+    final match = RegExp(
+      r'https?:\/\/[^\s]+|www\.[^\s]+',
+      caseSensitive: false,
+    ).firstMatch(text);
     if (match == null) return null;
     final url = match.group(0)!.replaceAll(RegExp(r'[),.]+$'), '');
     return url.startsWith('www.') ? 'https://$url' : url;
@@ -94,30 +102,56 @@ class ContentParser {
     final lower = urlOrText.toLowerCase();
     if (lower.contains('instagram.com')) return SourceApp.instagram;
     if (lower.contains('linkedin.com')) return SourceApp.linkedin;
-    if (lower.contains('youtube.com') || lower.contains('youtu.be')) return SourceApp.youtube;
-    if (lower.contains('wa.me') || lower.contains('whatsapp.com')) return SourceApp.whatsapp;
-    if (lower.contains('t.me') || lower.contains('telegram.me')) return SourceApp.telegram;
-    if (lower.startsWith('http://') || lower.startsWith('https://')) return SourceApp.browser;
+    if (lower.contains('youtube.com') || lower.contains('youtu.be')) {
+      return SourceApp.youtube;
+    }
+    if (lower.contains('wa.me') || lower.contains('whatsapp.com')) {
+      return SourceApp.whatsapp;
+    }
+    if (lower.contains('t.me') || lower.contains('telegram.me')) {
+      return SourceApp.telegram;
+    }
+    if (lower.startsWith('http://') || lower.startsWith('https://')) {
+      return SourceApp.browser;
+    }
     return SourceApp.unknown;
   }
 
   static VaultItemType detectItemType(String urlOrText, {String? typeHint}) {
     final lower = urlOrText.toLowerCase();
-    if (typeHint == 'image' || _endsWithAny(lower, ['.png', '.jpg', '.jpeg', '.webp'])) {
+    if (typeHint == 'image' ||
+        _endsWithAny(lower, ['.png', '.jpg', '.jpeg', '.webp'])) {
       return VaultItemType.image;
     }
-    if (typeHint == 'video' || _endsWithAny(lower, ['.mp4', '.mov', '.mkv', '.webm'])) {
+    if (typeHint == 'video' ||
+        _endsWithAny(lower, ['.mp4', '.mov', '.mkv', '.webm'])) {
       return VaultItemType.video;
     }
-    if (typeHint == 'pdf' || lower.endsWith('.pdf')) return VaultItemType.pdf;
-    if (typeHint == 'note') return VaultItemType.note;
-    if (lower.contains('instagram.com')) return VaultItemType.instagram;
-    if (lower.contains('linkedin.com')) return VaultItemType.linkedin;
-    if (lower.contains('youtube.com') || lower.contains('youtu.be')) return VaultItemType.youtube;
-    if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('www.')) {
+    if (typeHint == 'pdf' || lower.endsWith('.pdf')) {
+      return VaultItemType.pdf;
+    }
+    if (typeHint == 'voice') {
+      return VaultItemType.voice;
+    }
+    if (typeHint == 'note') {
+      return VaultItemType.note;
+    }
+    if (lower.contains('instagram.com')) {
+      return VaultItemType.instagram;
+    }
+    if (lower.contains('linkedin.com')) {
+      return VaultItemType.linkedin;
+    }
+    if (lower.contains('youtube.com') || lower.contains('youtu.be')) {
+      return VaultItemType.youtube;
+    }
+    if (lower.startsWith('http://') ||
+        lower.startsWith('https://') ||
+        lower.startsWith('www.')) {
       return VaultItemType.link;
     }
-    if (typeHint == 'document' || _endsWithAny(lower, ['.doc', '.docx', '.txt'])) {
+    if (typeHint == 'document' ||
+        _endsWithAny(lower, ['.doc', '.docx', '.txt'])) {
       return VaultItemType.document;
     }
     return VaultItemType.text;
@@ -125,16 +159,43 @@ class ContentParser {
 
   static String? suggestCollection(String titleOrUrl) {
     final lower = titleOrUrl.toLowerCase();
-    if (_containsAny(lower, ['flutter', 'dart', 'firebase', 'provider', 'bloc', 'riverpod'])) {
+    if (_containsAny(lower, [
+      'flutter',
+      'dart',
+      'firebase',
+      'provider',
+      'bloc',
+      'riverpod',
+    ])) {
       return 'Flutter';
     }
-    if (_containsAny(lower, ['job', 'career', 'hiring', 'resume', 'interview'])) return 'Career';
-    if (_containsAny(lower, ['ui', 'design', 'figma', 'animation', 'inspiration'])) {
+    if (_containsAny(lower, [
+      'job',
+      'career',
+      'hiring',
+      'resume',
+      'interview',
+    ])) {
+      return 'Career';
+    }
+    if (_containsAny(lower, [
+      'ui',
+      'design',
+      'figma',
+      'animation',
+      'inspiration',
+    ])) {
       return 'UI Inspiration';
     }
-    if (_containsAny(lower, ['money', 'bill', 'invoice', 'tax', 'payment'])) return 'Finance';
-    if (_containsAny(lower, ['travel', 'hotel', 'ticket', 'trip'])) return 'Travel';
-    if (_containsAny(lower, ['recipe', 'food', 'cooking'])) return 'Recipes';
+    if (_containsAny(lower, ['money', 'bill', 'invoice', 'tax', 'payment'])) {
+      return 'Finance';
+    }
+    if (_containsAny(lower, ['travel', 'hotel', 'ticket', 'trip'])) {
+      return 'Travel';
+    }
+    if (_containsAny(lower, ['recipe', 'food', 'cooking'])) {
+      return 'Recipes';
+    }
     return null;
   }
 
@@ -191,7 +252,10 @@ class ContentParser {
     if (source == SourceApp.instagram) return 'Instagram post or reel';
     if (source == SourceApp.linkedin) return 'LinkedIn post';
     if (source == SourceApp.youtube) return 'YouTube video';
-    if (type == VaultItemType.pdf || type == VaultItemType.image || type == VaultItemType.video) {
+    if (type == VaultItemType.voice) return 'Voice note';
+    if (type == VaultItemType.pdf ||
+        type == VaultItemType.image ||
+        type == VaultItemType.video) {
       return raw.split(RegExp(r'[\\/]')).last;
     }
     if (url != null) {
@@ -207,7 +271,8 @@ class ContentParser {
     return '${raw.substring(0, 140)}...';
   }
 
-  static bool _containsAny(String input, List<String> words) => words.any(input.contains);
+  static bool _containsAny(String input, List<String> words) =>
+      words.any(input.contains);
 
   static bool _endsWithAny(String input, List<String> suffixes) =>
       suffixes.any(input.endsWith);

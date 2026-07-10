@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../features/settings/settings_provider.dart';
 import '../core/services/app_navigator.dart';
+import '../features/home/app_shell.dart';
+import '../features/home/splash_screen.dart';
 import 'routes.dart';
 import 'theme/app_theme.dart';
 
@@ -20,9 +22,9 @@ class VaultlyApp extends StatelessWidget {
       darkTheme: AppTheme.dark(),
       themeMode: settings.darkMode ? ThemeMode.dark : ThemeMode.light,
       onGenerateRoute: AppRoutes.onGenerateRoute,
-      initialRoute: settings.hasCompletedOnboarding
-          ? AppRoutes.shell
-          : AppRoutes.splash,
+      home: settings.hasCompletedOnboarding
+          ? const AppShell()
+          : const SplashScreen(),
     );
   }
 }

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/routes.dart';
-import '../../core/widgets/empty_state.dart';
 import '../../data/models/vault_collection.dart';
 import '../../data/models/vault_item.dart';
 import '../capture/capture_provider.dart';
 import '../home/home_provider.dart';
 import '../widgets/collection_card.dart';
 import '../widgets/item_card.dart';
+import 'save_bottom_sheet.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, this.onSearchTap});
@@ -21,12 +22,15 @@ class HomeScreen extends StatelessWidget {
     final home = context.watch<HomeProvider>();
     if (home.items.isEmpty) {
       return SafeArea(
-        child: EmptyState(
-          title: 'Your vault is empty',
-          subtitle:
-              'Start by sharing a link from Instagram, YouTube, LinkedIn or Chrome.',
-          actionLabel: 'Add first item',
-          onAction: () => Navigator.pushNamed(context, AppRoutes.capture),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 96),
+          children: [
+            const _EmptyHomeHero(),
+            const SizedBox(height: 18),
+            _StarterActions(onMore: () => _showSaveSheet(context)),
+            const SizedBox(height: 22),
+            const _UseCasesCard(),
+          ],
         ),
       );
     }
@@ -38,6 +42,12 @@ class HomeScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 96),
           children: [
             _HomeHeader(inboxCount: home.smartInbox.length),
+            const SizedBox(height: 16),
+            _MemoryStats(
+              itemCount: home.items.length,
+              inboxCount: home.smartInbox.length,
+              collectionCount: home.collections.length,
+            ),
             const SizedBox(height: 16),
             InkWell(
               onTap: onSearchTap,
@@ -55,6 +65,8 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 20),
+            _DailyNudgeCard(onMore: () => _showSaveSheet(context)),
             const SizedBox(height: 20),
             if (home.smartInbox.isNotEmpty) ...[
               _ReviewQueueCard(count: home.smartInbox.length),
@@ -110,6 +122,203 @@ class HomeScreen extends StatelessWidget {
                 collections: home.collections,
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showSaveSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => const SaveBottomSheet(),
+    );
+  }
+}
+
+class _EmptyHomeHero extends StatelessWidget {
+  const _EmptyHomeHero();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary,
+        borderRadius: BorderRadius.circular(26),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Icon(Icons.bookmark_add_outlined, color: Colors.white),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'Make Vaultly useful in 10 seconds',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Save one link, video, note, or screenshot you normally forget. Vaultly will turn it into a searchable memory.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: Colors.white.withValues(alpha: 0.82),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StarterActions extends StatelessWidget {
+  const _StarterActions({required this.onMore});
+
+  final VoidCallback onMore;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Section(
+      title: 'Start with one save',
+      child: Column(
+        children: [
+          _StarterActionTile(
+            icon: Icons.link_rounded,
+            title: 'Paste a link',
+            subtitle: 'YouTube, Instagram, article, product, anything',
+            onTap: () => Navigator.pushNamed(
+              context,
+              AppRoutes.capture,
+              arguments: const CaptureSeed(typeHint: 'link'),
+            ),
+          ),
+          _StarterActionTile(
+            icon: Icons.notes_rounded,
+            title: 'Write a note',
+            subtitle: 'Idea, task, recommendation, place to remember',
+            onTap: () => Navigator.pushNamed(context, AppRoutes.noteEditor),
+          ),
+          _StarterActionTile(
+            icon: Icons.photo_camera_outlined,
+            title: 'Take a photo',
+            subtitle: 'Capture a receipt, product, book, or screenshot',
+            onTap: () async {
+              final image = await ImagePicker().pickImage(
+                source: ImageSource.camera,
+              );
+              if (!context.mounted || image == null) return;
+              Navigator.pushNamed(
+                context,
+                AppRoutes.capture,
+                arguments: CaptureSeed(
+                  text: image.path,
+                  filePath: image.path,
+                  typeHint: 'image',
+                ),
+              );
+            },
+          ),
+          _StarterActionTile(
+            icon: Icons.mic_none_rounded,
+            title: 'Create voice note',
+            subtitle: 'Save a quick spoken idea to organize later',
+            onTap: () => Navigator.pushNamed(
+              context,
+              AppRoutes.capture,
+              arguments: const CaptureSeed(
+                text: 'Voice note',
+                typeHint: 'voice',
+              ),
+            ),
+          ),
+          _StarterActionTile(
+            icon: Icons.add_rounded,
+            title: 'Show all save options',
+            subtitle: 'Clipboard, PDF, image, text, collection',
+            onTap: onMore,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StarterActionTile extends StatelessWidget {
+  const _StarterActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        onTap: onTap,
+        leading: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Icon(icon, color: theme.colorScheme.primary),
+        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right_rounded),
+      ),
+    );
+  }
+}
+
+class _UseCasesCard extends StatelessWidget {
+  const _UseCasesCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final ideas = const [
+      ('Watch later', 'Save videos you want to actually find again.'),
+      ('Shopping', 'Keep product links before you decide.'),
+      ('Learning', 'Collect Flutter, design, career, and finance ideas.'),
+      ('Life memory', 'Save places, recipes, messages, and screenshots.'),
+    ];
+    return _Section(
+      title: 'What to use it for',
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              for (final idea in ideas)
+                ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.check_circle_outline_rounded),
+                  title: Text(idea.$1),
+                  subtitle: Text(idea.$2),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -213,7 +422,7 @@ class _HomeHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Good morning, Anandhu',
+                      'Welcome back',
                       style: theme.textTheme.titleLarge?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
@@ -266,6 +475,142 @@ class _HomeHeader extends StatelessWidget {
   }
 }
 
+class _MemoryStats extends StatelessWidget {
+  const _MemoryStats({
+    required this.itemCount,
+    required this.inboxCount,
+    required this.collectionCount,
+  });
+
+  final int itemCount;
+  final int inboxCount;
+  final int collectionCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCard(
+            value: '$itemCount',
+            label: 'Saved',
+            icon: Icons.bookmarks_outlined,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _StatCard(
+            value: '$inboxCount',
+            label: 'Review',
+            icon: Icons.inbox_outlined,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _StatCard(
+            value: '$collectionCount',
+            label: 'Spaces',
+            icon: Icons.folder_outlined,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.value,
+    required this.label,
+    required this.icon,
+  });
+
+  final String value;
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 20, color: theme.colorScheme.primary),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            Text(label, style: theme.textTheme.labelMedium),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DailyNudgeCard extends StatelessWidget {
+  const _DailyNudgeCard({required this.onMore});
+
+  final VoidCallback onMore;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.tertiary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                Icons.lightbulb_outline_rounded,
+                color: theme.colorScheme.tertiary,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Save one thing for future you',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'A link, idea, product, recipe, video, or screenshot.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            IconButton.filled(
+              tooltip: 'Quick save',
+              onPressed: onMore,
+              icon: const Icon(Icons.add_rounded),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _QuickSave extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -275,6 +620,8 @@ class _QuickSave extends StatelessWidget {
       ('Note', Icons.notes_rounded, 'note'),
       ('PDF', Icons.picture_as_pdf_outlined, 'pdf'),
       ('Image', Icons.image_outlined, 'image'),
+      ('Photo', Icons.photo_camera_outlined, 'camera'),
+      ('Voice', Icons.mic_none_rounded, 'voice'),
       ('Clipboard', Icons.content_paste_rounded, 'text'),
     ];
     return SizedBox(
@@ -288,9 +635,36 @@ class _QuickSave extends StatelessWidget {
           return ActionChip(
             avatar: Icon(action.$2, size: 18),
             label: Text(action.$1),
-            onPressed: () {
+            onPressed: () async {
               if (action.$3 == 'note') {
                 Navigator.pushNamed(context, AppRoutes.noteEditor);
+                return;
+              }
+              if (action.$3 == 'camera') {
+                final image = await ImagePicker().pickImage(
+                  source: ImageSource.camera,
+                );
+                if (!context.mounted || image == null) return;
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.capture,
+                  arguments: CaptureSeed(
+                    text: image.path,
+                    filePath: image.path,
+                    typeHint: 'image',
+                  ),
+                );
+                return;
+              }
+              if (action.$3 == 'voice') {
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.capture,
+                  arguments: const CaptureSeed(
+                    text: 'Voice note',
+                    typeHint: 'voice',
+                  ),
+                );
                 return;
               }
               Navigator.pushNamed(
