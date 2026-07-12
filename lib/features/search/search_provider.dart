@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../data/models/vault_collection.dart';
@@ -10,6 +12,8 @@ class SearchProvider extends ChangeNotifier {
 
   final VaultItemRepository _items;
   final CollectionRepository _collections;
+  StreamSubscription<void>? _itemsSubscription;
+  StreamSubscription<void>? _collectionsSubscription;
   List<VaultItem> allItems = [];
   List<VaultCollection> collections = [];
   String query = '';
@@ -27,6 +31,11 @@ class SearchProvider extends ChangeNotifier {
     'LinkedIn',
     'YouTube',
   ];
+
+  void listen() {
+    _itemsSubscription ??= _items.changes.listen((_) => load());
+    _collectionsSubscription ??= _collections.changes.listen((_) => load());
+  }
 
   void load() {
     allItems = _items.all();
@@ -79,5 +88,12 @@ class SearchProvider extends ChangeNotifier {
       'YouTube' => item.itemType == VaultItemType.youtube,
       _ => true,
     };
+  }
+
+  @override
+  void dispose() {
+    _itemsSubscription?.cancel();
+    _collectionsSubscription?.cancel();
+    super.dispose();
   }
 }

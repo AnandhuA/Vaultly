@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/models/vault_item.dart';
+import '../features/auth/login_screen.dart';
 import '../features/capture/save_preview_screen.dart';
 import '../features/collections/collection_detail_screen.dart';
 import '../features/home/app_shell.dart';
@@ -25,34 +26,37 @@ class AppRoutes {
   static const smartInbox = '/smart-inbox';
   static const profile = '/profile';
   static const settings = '/settings';
+  static const login = '/login';
 
   static Route<dynamic> onGenerateRoute(RouteSettings routeSettings) {
     Widget page;
     switch (routeSettings.name) {
-      case splash:
+      case AppRoutes.splash:
         page = const SplashScreen();
-      case onboarding:
+      case AppRoutes.onboarding:
         page = const OnboardingScreen();
-      case firstCollection:
+      case AppRoutes.firstCollection:
         page = const FirstCollectionSetupScreen();
-      case shell:
+      case AppRoutes.shell:
         page = AppShell(initialIndex: routeSettings.arguments as int? ?? 0);
-      case capture:
+      case AppRoutes.capture:
         page = SavePreviewScreen(seed: routeSettings.arguments as CaptureSeed?);
-      case collectionDetail:
+      case AppRoutes.collectionDetail:
         page = CollectionDetailScreen(
           collectionId: routeSettings.arguments! as String,
         );
-      case itemDetail:
+      case AppRoutes.itemDetail:
         page = ItemDetailScreen(item: routeSettings.arguments! as VaultItem);
-      case noteEditor:
+      case AppRoutes.noteEditor:
         page = NoteEditorScreen(item: routeSettings.arguments as VaultItem?);
-      case smartInbox:
+      case AppRoutes.smartInbox:
         page = const SmartInboxScreen();
-      case profile:
+      case AppRoutes.profile:
         page = const ProfileScreen();
-      case settings:
+      case AppRoutes.settings:
         page = const SettingsScreen();
+      case AppRoutes.login:
+        page = const LoginScreen();
       default:
         page = const AppShell();
     }

@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../app/routes.dart';
 import '../../data/repositories/vault_item_repository.dart';
+import '../auth/auth_provider.dart';
+import '../collections/collection_provider.dart';
 import '../home/home_provider.dart';
+import '../inbox/smart_inbox_provider.dart';
 import '../search/search_provider.dart';
 import '../settings/settings_provider.dart';
 
@@ -13,6 +17,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final auth = context.watch<AuthProvider>();
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
@@ -23,6 +28,21 @@ class SettingsScreen extends StatelessWidget {
             onChanged: settings.toggleDarkMode,
             secondary: const Icon(Icons.dark_mode_outlined),
             title: const Text('Dark mode'),
+          ),
+          Card(
+            child: ListTile(
+              leading: Icon(
+                context.watch<AuthProvider>().isSignedIn
+                    ? Icons.cloud_done_outlined
+                    : Icons.storage_rounded,
+              ),
+              title: const Text('Storage'),
+              subtitle: Text(
+                context.watch<AuthProvider>().isSignedIn
+                    ? 'Firebase cloud storage for this signed-in user'
+                    : 'Local storage on this device',
+              ),
+            ),
           ),
           const Card(child: ListTile(leading: Icon(Icons.fingerprint_rounded), title: Text('Biometric lock'), subtitle: Text('Placeholder for device lock'))),
           const Card(child: ListTile(leading: Icon(Icons.cloud_upload_outlined), title: Text('Backup'), subtitle: Text('Cloud sync is planned for later'))),
@@ -67,7 +87,45 @@ class SettingsScreen extends StatelessWidget {
               },
             ),
           ),
-          const Card(child: ListTile(leading: Icon(Icons.privacy_tip_outlined), title: Text('Privacy'), subtitle: Text('Offline-first. No backend or login in this MVP.'))),
+          const Card(child: ListTile(leading: Icon(Icons.privacy_tip_outlined), title: Text('Privacy'), subtitle: Text('Signed-in vaults use Firebase. Offline vaults stay on this device.'))),
+          Card(
+            child: ListTile(
+              leading: Icon(auth.isSignedIn ? Icons.logout_rounded : Icons.login_rounded),
+              title: Text(auth.isSignedIn ? 'Sign out' : 'Sign in to Firebase'),
+              subtitle: Text(
+                auth.isSignedIn
+                    ? auth.user?.email ?? ''
+                    : 'Save future vault data to your cloud account',
+              ),
+              onTap: () async {
+                if (!auth.isSignedIn) {
+                  await context
+                      .read<SettingsProvider>()
+                      .setUseLocalStorageWithoutLogin(false);
+                  if (context.mounted) {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.login,
+                      (route) => false,
+                    );
+                  }
+                  return;
+                }
+                await auth.signOut();
+                if (context.mounted) {
+                  context.read<CollectionProvider>().load();
+                  context.read<HomeProvider>().load();
+                  context.read<SearchProvider>().load();
+                  context.read<SmartInboxProvider>().load();
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.login,
+                    (route) => false,
+                  );
+                }
+              },
+            ),
+          ),
           const Card(child: ListTile(leading: Icon(Icons.info_outline_rounded), title: Text('About'), subtitle: Text('Vaultly 1.0.0'))),
         ],
       ),

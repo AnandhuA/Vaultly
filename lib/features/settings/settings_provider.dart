@@ -8,10 +8,12 @@ class SettingsProvider extends ChangeNotifier {
   final SettingsRepository _repository;
   bool darkMode = false;
   bool hasCompletedOnboarding = false;
+  bool useLocalStorageWithoutLogin = false;
 
   void load() {
     darkMode = _repository.darkMode;
     hasCompletedOnboarding = _repository.hasCompletedOnboarding;
+    useLocalStorageWithoutLogin = _repository.useLocalStorageWithoutLogin;
     notifyListeners();
   }
 
@@ -24,6 +26,12 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> completeOnboarding() async {
     hasCompletedOnboarding = true;
     await _repository.setOnboardingComplete();
+    notifyListeners();
+  }
+
+  Future<void> setUseLocalStorageWithoutLogin(bool value) async {
+    useLocalStorageWithoutLogin = value;
+    await _repository.setUseLocalStorageWithoutLogin(value);
     notifyListeners();
   }
 }

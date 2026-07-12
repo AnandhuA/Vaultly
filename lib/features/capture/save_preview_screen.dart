@@ -7,6 +7,7 @@ import '../../core/services/link_preview_service.dart';
 import '../../core/utils/content_parser.dart';
 import '../../core/widgets/cover_image.dart';
 import '../../data/models/vault_collection.dart';
+import '../../data/models/vault_item.dart';
 import '../../data/models/source_app.dart';
 import '../capture/capture_provider.dart';
 import '../collections/collection_provider.dart';
@@ -194,20 +195,8 @@ class _SavePreviewScreenState extends State<SavePreviewScreen> {
 
   Future<void> _save({required bool reviewLater}) async {
     final selectedCollection = context.read<CollectionProvider>().findById(collectionId);
-    final item = await context.read<CaptureProvider>().save(
-          title: title.text,
-          rawContent: content.text,
-          sourceApp: parsed.source.label,
-          itemType: parsed.itemType,
-          collectionId: collectionId,
-          tags: tags.text.split(RegExp(r'[\s,#]+')).where((tag) => tag.isNotEmpty).toList(),
-          note: note.text,
-          reminderDate: reminderDate,
-          localFilePath: parsed.localFilePath,
-          thumbnailPath: coverImage,
-          needsReview: reviewLater || collectionId == null || parsed.confidence < 0.72,
-          confidence: parsed.confidence,
-        );
+    final item = await _saveItem(reviewLater);
+    if (item == null) return;
     if (!mounted) return;
     context.read<HomeProvider>().load();
     context.read<SmartInboxProvider>().load();
@@ -230,6 +219,32 @@ class _SavePreviewScreenState extends State<SavePreviewScreen> {
       ),
     );
     Navigator.pushNamedAndRemoveUntil(context, AppRoutes.shell, (route) => false);
+  }
+
+  Future<VaultItem?> _saveItem(bool reviewLater) async {
+    try {
+      return await context.read<CaptureProvider>().save(
+            title: title.text,
+            rawContent: content.text,
+            sourceApp: parsed.source.label,
+            itemType: parsed.itemType,
+            collectionId: collectionId,
+            tags: tags.text.split(RegExp(r'[\s,#]+')).where((tag) => tag.isNotEmpty).toList(),
+            note: note.text,
+            reminderDate: reminderDate,
+            localFilePath: parsed.localFilePath,
+            thumbnailPath: coverImage,
+            needsReview: reviewLater || collectionId == null || parsed.confidence < 0.72,
+            confidence: parsed.confidence,
+          );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not save to Firebase: $error')),
+        );
+      }
+      return null;
+    }
   }
 
   Future<void> _loadCover() async {

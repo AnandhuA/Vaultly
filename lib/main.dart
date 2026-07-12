@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +11,7 @@ import 'data/repositories/collection_repository.dart';
 import 'data/repositories/settings_repository.dart';
 import 'data/repositories/vault_item_repository.dart';
 import 'features/capture/capture_provider.dart';
+import 'features/auth/auth_provider.dart';
 import 'features/collections/collection_provider.dart';
 import 'features/home/home_provider.dart';
 import 'features/home/widget_action_provider.dart';
@@ -17,9 +19,11 @@ import 'features/inbox/smart_inbox_provider.dart';
 import 'features/search/search_provider.dart';
 import 'features/settings/settings_provider.dart';
 import 'features/shared_intent/shared_intent_provider.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await Hive.initFlutter();
 
   final sharedPreferences = await SharedPreferences.getInstance();
@@ -40,21 +44,35 @@ Future<void> main() async {
         Provider.value(value: collectionRepository),
         Provider.value(value: settingsRepository),
         ChangeNotifierProvider(
+          create: (_) => AuthProvider(
+            vaultItemRepository,
+            collectionRepository,
+          )..initialize(),
+        ),
+        ChangeNotifierProvider(
           create: (_) => SettingsProvider(settingsRepository)..load(),
         ),
         ChangeNotifierProvider(
-          create: (_) => CollectionProvider(collectionRepository)..load(),
+          create: (_) => CollectionProvider(collectionRepository)
+            ..listen()
+            ..load(),
         ),
         ChangeNotifierProvider(
           create: (_) =>
-              HomeProvider(vaultItemRepository, collectionRepository)..load(),
+              HomeProvider(vaultItemRepository, collectionRepository)
+                ..listen()
+                ..load(),
         ),
         ChangeNotifierProvider(
-          create: (_) => SmartInboxProvider(vaultItemRepository)..load(),
+          create: (_) => SmartInboxProvider(vaultItemRepository)
+            ..listen()
+            ..load(),
         ),
         ChangeNotifierProvider(
           create: (_) =>
-              SearchProvider(vaultItemRepository, collectionRepository)..load(),
+              SearchProvider(vaultItemRepository, collectionRepository)
+                ..listen()
+                ..load(),
         ),
         ChangeNotifierProvider(
           create: (_) =>

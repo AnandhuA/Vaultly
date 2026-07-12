@@ -84,11 +84,20 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           needsReview: collectionId == null,
           confidence: collectionId == null ? 0.5 : 1,
         );
-    await context.read<VaultItemRepository>().save(item);
-    if (mounted) {
-      context.read<HomeProvider>().load();
-      context.read<SearchProvider>().load();
-      Navigator.pop(context);
+    try {
+      await context.read<VaultItemRepository>().save(item);
+      if (mounted) {
+        context.read<HomeProvider>().load();
+        context.read<SearchProvider>().load();
+        Navigator.pop(context);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not save note to Firebase: $error'),
+        ),
+      );
     }
   }
 }

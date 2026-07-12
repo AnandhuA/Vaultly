@@ -14,15 +14,36 @@ class CollectionsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final home = context.watch<HomeProvider>();
     final collections = home.collections;
+    final width = MediaQuery.sizeOf(context).width;
+    final crossAxisCount = width >= 1400
+        ? 5
+        : width >= 1050
+        ? 4
+        : width > 720
+        ? 3
+        : 2;
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 100),
+        padding: EdgeInsets.fromLTRB(
+          width >= 900 ? 28 : 20,
+          18,
+          width >= 900 ? 28 : 20,
+          width >= 900 ? 28 : 100,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Expanded(child: Text('Collections', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800))),
+                Expanded(
+                  child: Text(
+                    'Collections',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                ),
                 IconButton(
                   tooltip: 'Create collection',
                   onPressed: () => _create(context),
@@ -33,17 +54,27 @@ class CollectionsScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Expanded(
               child: collections.isEmpty
-                  ? EmptyState(title: 'Create your first collection', subtitle: 'Collections keep your saves calm and easy to return to.', actionLabel: 'Create Collection', onAction: () => _create(context))
+                  ? EmptyState(
+                      title: 'Create your first collection',
+                      subtitle:
+                          'Collections keep your saves calm and easy to return to.',
+                      actionLabel: 'Create Collection',
+                      onAction: () => _create(context),
+                    )
                   : GridView.count(
-                      crossAxisCount: MediaQuery.sizeOf(context).width > 720 ? 4 : 2,
-                      childAspectRatio: 1.08,
+                      crossAxisCount: crossAxisCount,
+                      childAspectRatio: width >= 900 ? 1.45 : 1.08,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
                       children: [
                         for (final collection in collections)
                           CollectionCard(
                             collection: collection,
-                            onTap: () => Navigator.pushNamed(context, AppRoutes.collectionDetail, arguments: collection.id),
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.collectionDetail,
+                              arguments: collection.id,
+                            ),
                           ),
                       ],
                     ),
@@ -60,10 +91,20 @@ class CollectionsScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Create collection'),
-        content: TextField(controller: controller, autofocus: true, decoration: const InputDecoration(hintText: 'Collection name')),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Collection name'),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('Create')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Create'),
+          ),
         ],
       ),
     );

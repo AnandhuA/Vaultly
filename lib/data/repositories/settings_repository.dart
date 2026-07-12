@@ -10,8 +10,12 @@ class SettingsRepository {
   bool get darkMode => _preferences.getBool('darkMode') ?? false;
   bool get hasCompletedOnboarding =>
       _preferences.getBool('hasCompletedOnboarding') ?? false;
+  bool get useLocalStorageWithoutLogin =>
+      _preferences.getBool('useLocalStorageWithoutLogin') ?? false;
 
   Future<void> setDarkMode(bool value) => _preferences.setBool('darkMode', value);
   Future<void> setOnboardingComplete() =>
       _preferences.setBool('hasCompletedOnboarding', true);
+  Future<void> setUseLocalStorageWithoutLogin(bool value) =>
+      _preferences.setBool('useLocalStorageWithoutLogin', value);
 }

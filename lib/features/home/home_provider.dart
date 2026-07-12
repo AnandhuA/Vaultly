@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../data/models/vault_collection.dart';
@@ -10,9 +12,16 @@ class HomeProvider extends ChangeNotifier {
 
   final VaultItemRepository _items;
   final CollectionRepository _collections;
+  StreamSubscription<void>? _itemsSubscription;
+  StreamSubscription<void>? _collectionsSubscription;
 
   List<VaultItem> items = [];
   List<VaultCollection> collections = [];
+
+  void listen() {
+    _itemsSubscription ??= _items.changes.listen((_) => load());
+    _collectionsSubscription ??= _collections.changes.listen((_) => load());
+  }
 
   void load() {
     items = _items.all().where((item) => !item.isArchived).toList();
@@ -35,4 +44,11 @@ class HomeProvider extends ChangeNotifier {
   List<VaultItem> get continueItems => items.where((item) => item.isReadLater).take(5).toList();
   List<VaultItem> get todaysFocus =>
       items.where((item) => item.reminderDate != null).take(5).toList();
+
+  @override
+  void dispose() {
+    _itemsSubscription?.cancel();
+    _collectionsSubscription?.cancel();
+    super.dispose();
+  }
 }

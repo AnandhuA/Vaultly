@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../features/auth/auth_provider.dart';
+import '../features/auth/login_screen.dart';
 import '../features/settings/settings_provider.dart';
 import '../core/services/app_navigator.dart';
 import '../features/home/app_shell.dart';
@@ -14,6 +16,7 @@ class VaultlyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final auth = context.watch<AuthProvider>();
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       navigatorKey: AppNavigator.key,
@@ -22,9 +25,24 @@ class VaultlyApp extends StatelessWidget {
       darkTheme: AppTheme.dark(),
       themeMode: settings.darkMode ? ThemeMode.dark : ThemeMode.light,
       onGenerateRoute: AppRoutes.onGenerateRoute,
-      home: settings.hasCompletedOnboarding
-          ? const AppShell()
-          : const SplashScreen(),
+      home: auth.isInitializing
+          ? const _AuthLoadingScreen()
+          : auth.isSignedIn || settings.useLocalStorageWithoutLogin
+              ? settings.hasCompletedOnboarding
+                  ? const AppShell()
+                  : const SplashScreen()
+              : const LoginScreen(),
+    );
+  }
+}
+
+class _AuthLoadingScreen extends StatelessWidget {
+  const _AuthLoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 }

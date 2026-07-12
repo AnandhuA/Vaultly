@@ -61,8 +61,8 @@ class SaveBottomSheet extends StatelessWidget {
               _Action(
                 icon: Icons.link_rounded,
                 label: 'Paste Link',
-                subtitle: 'Add a URL manually',
-                onTap: () => _open(context),
+                subtitle: 'Use the last copied link',
+                onTap: () => _openClipboard(context, typeHint: 'link'),
               ),
               _Action(
                 icon: Icons.note_add_outlined,
@@ -205,6 +205,18 @@ class SaveBottomSheet extends StatelessWidget {
   void _open(BuildContext context, [CaptureSeed? seed]) {
     Navigator.pop(context);
     Navigator.pushNamed(context, AppRoutes.capture, arguments: seed);
+  }
+
+  Future<void> _openClipboard(
+    BuildContext context, {
+    required String typeHint,
+  }) async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!context.mounted) return;
+    _open(
+      context,
+      CaptureSeed(text: data?.text ?? '', typeHint: typeHint),
+    );
   }
 }
 

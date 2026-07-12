@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
@@ -20,30 +21,38 @@ class SharedIntentService {
   Future<void> initialize() async {}
 
   Stream<SharedIntentPayload> listenForSharedContent() {
+    if (!_supportsShareIntent) return const Stream.empty();
     final pluginStream = ReceiveSharingIntent.instance.getMediaStream().map(parseSharedContent);
-    final nativeStream = _nativeEventChannel.receiveBroadcastStream().map((event) {
-      return parseNativePayload(Map<dynamic, dynamic>.from(event as Map));
-    });
+    final nativeStream = _supportsNativeShareIntent
+        ? _nativeEventChannel.receiveBroadcastStream().map((event) {
+            return parseNativePayload(Map<dynamic, dynamic>.from(event as Map));
+          })
+        : const Stream<SharedIntentPayload>.empty();
     return StreamGroup.merge([pluginStream, nativeStream]);
   }
 
   Stream<SharedIntentPayload> get stream => listenForSharedContent();
 
   Future<SharedIntentPayload?> getInitialSharedContent() async {
-    final nativePayload = await _nativeMethodChannel.invokeMapMethod<String, dynamic>(
-      'getInitialShare',
-    );
-    if (nativePayload != null && (nativePayload['text'] as String?)?.trim().isNotEmpty == true) {
-      await _nativeMethodChannel.invokeMethod<void>('resetInitialShare');
-      await ReceiveSharingIntent.instance.reset();
-      return parseNativePayload(nativePayload);
+    if (!_supportsShareIntent) return null;
+    if (_supportsNativeShareIntent) {
+      final nativePayload = await _nativeMethodChannel.invokeMapMethod<String, dynamic>(
+        'getInitialShare',
+      );
+      if (nativePayload != null && (nativePayload['text'] as String?)?.trim().isNotEmpty == true) {
+        await _nativeMethodChannel.invokeMethod<void>('resetInitialShare');
+        await ReceiveSharingIntent.instance.reset();
+        return parseNativePayload(nativePayload);
+      }
     }
 
     final media = await ReceiveSharingIntent.instance.getInitialMedia();
     if (media.isNotEmpty) {
       final payload = parseSharedContent(media);
       await ReceiveSharingIntent.instance.reset();
-      await _nativeMethodChannel.invokeMethod<void>('resetInitialShare');
+      if (_supportsNativeShareIntent) {
+        await _nativeMethodChannel.invokeMethod<void>('resetInitialShare');
+      }
       if (payload.text.trim().isNotEmpty) return payload;
     }
     return null;
@@ -61,7 +70,21 @@ class SharedIntentService {
     _subscription = null;
   }
 
+  bool get _supportsShareIntent {
+    if (kIsWeb) return false;
+    return defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
+  bool get _supportsNativeShareIntent {
+    if (kIsWeb) return false;
+    return defaultTargetPlatform == TargetPlatform.android;
+  }
+
   SharedIntentPayload parseSharedContent(List<SharedMediaFile> media) {
+    if (media.isEmpty) {
+      return const SharedIntentPayload(text: '', typeHint: 'text');
+    }
     final first = media.first;
     final path = first.path;
     if (path.trim().isEmpty || path == 'null') {

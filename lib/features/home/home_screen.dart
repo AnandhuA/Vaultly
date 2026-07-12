@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -20,6 +21,9 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final home = context.watch<HomeProvider>();
+    if (MediaQuery.sizeOf(context).width >= 1000) {
+      return _DesktopHomeScreen(home: home, onSearchTap: onSearchTap);
+    }
     if (home.items.isEmpty) {
       return SafeArea(
         child: ListView(
@@ -136,6 +140,364 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+class _DesktopHomeScreen extends StatelessWidget {
+  const _DesktopHomeScreen({required this.home, this.onSearchTap});
+
+  final HomeProvider home;
+  final VoidCallback? onSearchTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isEmpty = home.items.isEmpty;
+    return SafeArea(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async => home.load(),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(28, 24, 18, 32),
+                children: [
+                  _DesktopHeader(
+                    itemCount: home.items.length,
+                    inboxCount: home.smartInbox.length,
+                    collectionCount: home.collections.length,
+                    onSearchTap: onSearchTap,
+                  ),
+                  const SizedBox(height: 22),
+                  if (isEmpty) ...[
+                    const _EmptyHomeHero(),
+                    const SizedBox(height: 18),
+                    _StarterActions(onMore: () => _showSaveDialog(context)),
+                  ] else ...[
+                    if (home.smartInbox.isNotEmpty) ...[
+                      _ReviewQueueCard(count: home.smartInbox.length),
+                      const SizedBox(height: 20),
+                    ],
+                    _DesktopSectionGrid(
+                      title: 'Recently Saved',
+                      items: home.recent,
+                      collections: home.collections,
+                    ),
+                    _DesktopSectionGrid(
+                      title: 'Continue',
+                      items: home.continueItems,
+                      collections: home.collections,
+                    ),
+                    _Section(
+                      title: 'Collections',
+                      child: GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: MediaQuery.sizeOf(context).width >= 1380 ? 4 : 3,
+                        childAspectRatio: 1.55,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        children: [
+                          for (final collection in home.collections.take(8))
+                            CollectionCard(
+                              collection: collection,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.collectionDetail,
+                                arguments: collection.id,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 390,
+            child: _DesktopQuickCapture(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSaveDialog(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      constraints: const BoxConstraints(maxWidth: 560),
+      builder: (_) => const SaveBottomSheet(),
+    );
+  }
+}
+
+class _DesktopHeader extends StatelessWidget {
+  const _DesktopHeader({
+    required this.itemCount,
+    required this.inboxCount,
+    required this.collectionCount,
+    this.onSearchTap,
+  });
+
+  final int itemCount;
+  final int inboxCount;
+  final int collectionCount;
+  final VoidCallback? onSearchTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Good morning, Anandhu',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Save anything. Find everything.',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.capture),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Add link or text'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        InkWell(
+          onTap: onSearchTap,
+          borderRadius: BorderRadius.circular(18),
+          child: AbsorbPointer(
+            child: TextField(
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search_rounded),
+                hintText: 'Search notes, links, videos, PDFs...',
+                suffixIcon: Icon(
+                  Icons.tune_rounded,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        _MemoryStats(
+          itemCount: itemCount,
+          inboxCount: inboxCount,
+          collectionCount: collectionCount,
+        ),
+      ],
+    );
+  }
+}
+
+class _DesktopQuickCapture extends StatefulWidget {
+  const _DesktopQuickCapture();
+
+  @override
+  State<_DesktopQuickCapture> createState() => _DesktopQuickCaptureState();
+}
+
+class _DesktopQuickCaptureState extends State<_DesktopQuickCapture> {
+  final _content = TextEditingController();
+
+  @override
+  void dispose() {
+    _content.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLowest,
+        border: Border(
+          left: BorderSide(color: theme.colorScheme.outlineVariant),
+        ),
+      ),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(18, 24, 24, 32),
+        children: [
+          Text(
+            'Quick capture',
+            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Paste once, save fast, organize later.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _content,
+            onChanged: (_) => setState(() {}),
+            minLines: 4,
+            maxLines: 7,
+            decoration: const InputDecoration(
+              labelText: 'Link or text',
+              hintText: 'Paste a URL, quote, idea, or useful text',
+              alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 14),
+          FilledButton.icon(
+            onPressed: _content.text.trim().isEmpty ? null : _openPreview,
+            icon: const Icon(Icons.check_rounded),
+            label: const Text('Preview and save'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _saveClipboard,
+            icon: const Icon(Icons.content_paste_rounded),
+            label: const Text('Save clipboard'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.noteEditor),
+            icon: const Icon(Icons.note_add_outlined),
+            label: const Text('New note'),
+          ),
+          const SizedBox(height: 20),
+          _Section(
+            title: 'Fast actions',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ActionChip(
+                  avatar: const Icon(Icons.link_rounded, size: 18),
+                  label: const Text('Link'),
+                  onPressed: _saveLinkFromClipboard,
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.play_circle_outline_rounded, size: 18),
+                  label: const Text('YouTube'),
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.capture,
+                    arguments: const CaptureSeed(typeHint: 'youtube'),
+                  ),
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                  label: const Text('PDF'),
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.capture,
+                    arguments: const CaptureSeed(typeHint: 'pdf'),
+                  ),
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.image_outlined, size: 18),
+                  label: const Text('Image'),
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.capture,
+                    arguments: const CaptureSeed(typeHint: 'image'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveClipboard() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
+    Navigator.pushNamed(
+      context,
+      AppRoutes.capture,
+      arguments: CaptureSeed(text: data?.text ?? '', typeHint: 'text'),
+    );
+  }
+
+  Future<void> _saveLinkFromClipboard() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
+    Navigator.pushNamed(
+      context,
+      AppRoutes.capture,
+      arguments: CaptureSeed(text: data?.text ?? '', typeHint: 'link'),
+    );
+  }
+
+  void _openPreview() {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.capture,
+      arguments: CaptureSeed(text: _content.text.trim(), typeHint: 'text'),
+    );
+  }
+}
+
+class _DesktopSectionGrid extends StatelessWidget {
+  const _DesktopSectionGrid({
+    required this.title,
+    required this.items,
+    required this.collections,
+  });
+
+  final String title;
+  final List<VaultItem> items;
+  final List<VaultCollection> collections;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) return const SizedBox.shrink();
+    return _Section(
+      title: title,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = constraints.maxWidth >= 860 ? 2 : 1;
+          return GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: columns,
+            childAspectRatio: columns == 2 ? 3.4 : 5.1,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            children: [
+              for (final item in items)
+                ItemCard(
+                  item: item,
+                  collection: collections
+                      .where((c) => c.id == item.collectionId)
+                      .firstOrNull,
+                  compact: true,
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _EmptyHomeHero extends StatelessWidget {
   const _EmptyHomeHero();
 
@@ -196,11 +558,18 @@ class _StarterActions extends StatelessWidget {
             icon: Icons.link_rounded,
             title: 'Paste a link',
             subtitle: 'YouTube, Instagram, article, product, anything',
-            onTap: () => Navigator.pushNamed(
-              context,
-              AppRoutes.capture,
-              arguments: const CaptureSeed(typeHint: 'link'),
-            ),
+            onTap: () async {
+              final data = await Clipboard.getData(Clipboard.kTextPlain);
+              if (!context.mounted) return;
+              Navigator.pushNamed(
+                context,
+                AppRoutes.capture,
+                arguments: CaptureSeed(
+                  text: data?.text ?? '',
+                  typeHint: 'link',
+                ),
+              );
+            },
           ),
           _StarterActionTile(
             icon: Icons.notes_rounded,
@@ -663,6 +1032,19 @@ class _QuickSave extends StatelessWidget {
                   arguments: const CaptureSeed(
                     text: 'Voice note',
                     typeHint: 'voice',
+                  ),
+                );
+                return;
+              }
+              if (action.$1 == 'Link') {
+                final data = await Clipboard.getData(Clipboard.kTextPlain);
+                if (!context.mounted) return;
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.capture,
+                  arguments: CaptureSeed(
+                    text: data?.text ?? '',
+                    typeHint: 'link',
                   ),
                 );
                 return;

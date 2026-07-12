@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import '../../app/routes.dart';
 import '../../core/services/app_navigator.dart';
@@ -26,7 +27,7 @@ class WidgetActionProvider extends ChangeNotifier {
         AppNavigator.openCapture(const CaptureSeed(typeHint: 'text'));
         return;
       case 'link':
-        AppNavigator.openCapture(const CaptureSeed(typeHint: 'link'));
+        _openClipboardLink();
         return;
       case 'note':
         AppNavigator.openRoute(AppRoutes.noteEditor);
@@ -35,6 +36,13 @@ class WidgetActionProvider extends ChangeNotifier {
         AppNavigator.openShell(initialIndex: 3);
         return;
     }
+  }
+
+  Future<void> _openClipboardLink() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    AppNavigator.openCapture(
+      CaptureSeed(text: data?.text ?? '', typeHint: 'link'),
+    );
   }
 
   @override

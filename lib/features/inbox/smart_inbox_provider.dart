@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../data/models/vault_item.dart';
@@ -7,7 +9,12 @@ class SmartInboxProvider extends ChangeNotifier {
   SmartInboxProvider(this._repository);
 
   final VaultItemRepository _repository;
+  StreamSubscription<void>? _subscription;
   List<VaultItem> items = [];
+
+  void listen() {
+    _subscription ??= _repository.changes.listen((_) => load());
+  }
 
   void load() {
     items = _repository.getNeedsReviewItems();
@@ -73,5 +80,11 @@ class SmartInboxProvider extends ChangeNotifier {
       await _repository.deleteItem(item.id);
     }
     load();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }

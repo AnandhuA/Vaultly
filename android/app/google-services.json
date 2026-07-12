@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "522749971258",
+    "project_id": "vaultly-d1081",
+    "storage_bucket": "vaultly-d1081.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:522749971258:android:2543844db3b243531dde03",
+        "android_client_info": {
+          "package_name": "com.example.vaultly"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "522749971258-cdkgi4jnrnge1bgd10o7lr0fejmb182u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWleS7oyKca2QyfSuNsnMc73Rw-DDxPpg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "522749971258-cdkgi4jnrnge1bgd10o7lr0fejmb182u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
